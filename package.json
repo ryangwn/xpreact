@@ -1,0 +1,29 @@
+{
+  "name": "xpreact",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "demo:dev": "pnpm --filter=demo dev"
+  },
+  "keywords": [],
+  "author": "ryan",
+  "license": "ISC",
+  "exports": {
+    ".": {
+      "types": "./packages/core/src/index.d.ts",
+      "import": "./packages/core/src/index.js"
+    },
+    "./hooks": {
+      "types": "./packages/hooks/src/index.d.ts",
+      "import": "./packages/hooks/src/index.js"
+    },
+    "./jsx-runtime": {
+      "types": "./packages/jsx-runtime/src/index.d.ts",
+      "import": "./packages/jsx-runtime/src/index.js"
+    },
+    "./jsx-dev-runtime": {
+      "types": "./packages/jsx-runtime/src/index.d.ts",
+      "import": "./packages/jsx-runtime/src/index.js"
+    }
+  }
+}

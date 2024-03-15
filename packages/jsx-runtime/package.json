@@ -1,0 +1,15 @@
+{
+  "name": "xpreact-jsx-runtime",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+   
+  },
+  "peerDependencies": {
+    "xpreact": "workspace:*"
+  },
+  "keywords": [],
+  "author": "ryan",
+  "license": "ISC"
+}
