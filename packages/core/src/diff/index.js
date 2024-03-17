@@ -1,11 +1,11 @@
 import { options } from '../options'
-import { isFunction } from '../shared/is'
 import { BaseComponent } from '../component'
 import { Fragment, createVNode } from '../create-element'
-import { diffChildren } from './children'
-import { INSERT_VNODE, EMPTY_OBJ, EMPTY_ARR } from '../constants'
-import { array } from '../shared/array'
+import { diffChildren, normalizeChildren } from './children'
+import { EMPTY_OBJ, EMPTY_ARR, RE_RENDER } from '../constants'
+import { toArray, shallowCompare, assign, isFunction } from '../shared'
 import { setProperty } from './props'
+import { setTextContent } from '../dom/api'
 
 export function diff(
   parentDom,
@@ -22,7 +22,7 @@ export function diff(
 
   outer: if (isFunction(newType)) {
     let c, isNew,
-      oldProps = oldVNode.props;
+      oldProps = oldVNode.props || EMPTY_OBJ;
     let newProps = newVNode.props;
 
     // Get component and set it to `c`
@@ -45,6 +45,7 @@ export function diff(
     c.stateCallbacks = [];
     c._vnode = newVNode;
     c._parentDom = parentDom;
+    c._flags = newVNode._flags;
 
     // Invoke pre-render lifecycle methods
 
@@ -63,18 +64,32 @@ export function diff(
       c._stateCallbacks = [];
     } else {
       do {
-        c._dirty = false;
-        if (renderHook) renderHook(newVNode);
+        if (
+          !shallowCompare(oldVNode, {}) ||
+          (c._flags & RE_RENDER) ||
+          shallowCompare(c.props, oldProps)
+        ) {
+          c._dirty = false;
 
-        tmp = c.render(c.props, c.state, c.context);
+          if (renderHook) renderHook(newVNode);
 
-        // Handle setState called in render, see #2553
-        c.state = c._nextState;
+          tmp = c.render(c.props, c.state, c.context);
+
+          c.state = c._nextState;
+        } // If same VNode don't need to re-create components 
+        else {
+          c._dirty = false;
+          copyVNode(newVNode, oldVNode);
+          return;
+        }
       } while (c._dirty && ++count < 25);
     }
 
     let isTopLevelFragment = tmp != null && tmp.type === Fragment && tmp.key == null;
-    newVNode._children = array(isTopLevelFragment ? tmp.props.children : tmp);
+    newVNode._children = toArray(isTopLevelFragment 
+      ? tmp.props.children
+      : tmp
+    );
 
     diffChildren(
       parentDom,
@@ -82,7 +97,6 @@ export function diff(
       oldVNode,
       isSvg,
       commitQueue,
-      null,
       refQueue
     )
   } else {
@@ -97,10 +111,6 @@ export function diff(
   }
 
   if ((tmp = options._diffed)) tmp(newVNode)
-
-  // if (flags & INSERT_VNODE) {
-  //   insert(newVNode, null, parentDom);
-  // }
 }
 
 /**
@@ -150,15 +160,24 @@ function diffElementNodes(
   // nodeType = null is number|string node (replace textContent)
   if (nodeType === null) {
     if (oldProps !== newProps && dom.data !== newProps) {
-      dom.textContent = newProps;
+      setTextContent(dom, newProps)
     }
   } else {
-    oldProps = oldVNode.props || EMPTY_OBJ;
+
+    for (i in oldProps) {
+      value = oldProps[i];
+      if (i == 'children') {
+      } else if (i == 'dangerouslySetInnerHTML') {
+        oldHtml = value
+      } else if (i !== 'key' && !(i in newProps)) {
+        setProperty(dom, i, null, oldProps[i], isSvg);
+      }
+    }
 
     for (i in newProps) {
       value = newProps[i];
       if (i == 'children') {
-        newChildren = value;
+        newChildren = normalizeChildren(value);
       } else if (i == 'dangerouslySetInnerHTML') {
         newHtml = value;
       } else if (i == 'value') {
@@ -178,7 +197,7 @@ function diffElementNodes(
     if (newHtml) {
 
     } else {
-      newVNode._children = newChildren ? array(newChildren) : null
+      newVNode._children = !newChildren ? null : toArray(newChildren)
       diffChildren(
         dom,
         newVNode,
@@ -194,22 +213,8 @@ function diffElementNodes(
   return dom;
 }
 
-function diffTextChild(
-  parentDom,
-  newChildren,
-  oldChildren = ''
-) {
-  if (oldChildren !== newChildren) {
-    if (oldChildren !== '') {
-      parentDom.firstChild.nodeValue = newChildren;
-    } else {
-      setTextContent(parentDom, newChildren);
-    }
-  }
-}
-
-function setTextContent(dom, children) {
-  dom.textContent = children;
+function copyVNode(newVNode, oldVNode) {
+  assign(newVNode, oldVNode);
 }
 
 /** The `.render()` method for a PFC backing instance. */

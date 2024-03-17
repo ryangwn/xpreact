@@ -13,3 +13,7 @@ function StaticNode() {
   )
 }
 ```
+
+## Inspired
+- [preact](https://preactjs.com/)
+- [inferno](https://www.infernojs.org/)

@@ -17,6 +17,10 @@
       "types": "./packages/hooks/src/index.d.ts",
       "import": "./packages/hooks/src/index.js"
     },
+    "./runes": {
+      "types": "./packages/runes/src/index.d.ts",
+      "import": "./packages/runes/src/index.js"
+    },
     "./jsx-runtime": {
       "types": "./packages/jsx-runtime/src/index.d.ts",
       "import": "./packages/jsx-runtime/src/index.js"

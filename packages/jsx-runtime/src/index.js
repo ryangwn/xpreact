@@ -1,7 +1,5 @@
 import { options, Fragment } from 'xpreact'
 
-let vnodeId = 0;
-
 /**
  * JSX.Element factory used by Babel's {runtime:"automatic"} JSX transform
  * @param {VNode['type']} type
@@ -32,16 +30,15 @@ function createVNode(type, props, key, isStaticChildren, __source, __self) {
 		props: normalizedProps,
 		key,
 		ref,
+
 		_children: null,
 		_parent: null,
-		_depth: 0,
 		_dom: null,
-		_nextDom: undefined,
+		// _nextDom: undefined,
 		_component: null,
+
 		constructor: undefined,
-		_original: --vnodeId,
-		_index: -1,
-		_flags: 0,
+
 		__source,
 		__self
 	};

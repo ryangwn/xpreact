@@ -1,8 +1,8 @@
-import { createVNode } from '../create-element'
+import { createVNode, createTextNode } from '../create-element'
 import { INSERT_VNODE, EMPTY_ARR, EMPTY_OBJ } from '../constants'
 import { diff } from './index'
-import { isArray } from '../shared/array'
-import { isFunction } from '../shared/is'
+import { isArray, toArray, isFunction, lisAlgorithm } from '../shared'
+import { insertOrAppend, remove } from '../dom/api'
 
 /**
  * Diff the children of a virtual node
@@ -21,13 +21,10 @@ export function diffChildren(
   oldParentVNode,
   isSvg,
   commitQueue,
-  oldDom,
   refQueue
 ) {
   let oldChildren = (oldParentVNode && oldParentVNode._children) || EMPTY_ARR;
   let newChildren = newParentVNode._children || EMPTY_ARR;
-
-  constructNewChildrenArray(newParentVNode);
 
   let j = 0,
     oldEndIdx = oldChildren.length - 1,
@@ -35,28 +32,31 @@ export function diffChildren(
     oldVNode = oldChildren[j] || EMPTY_OBJ,
     newVNode = newChildren[j];
 
+  // Step 1
   outer: {
-    while (oldVNode.type === newVNode.type) {
-      // console.log('xtype:', newVNode, oldVNode, oldVNode.props == newVNode.props);
+    // Sync nodes with the same key at the beginning.
+    while (isSameVNode(newVNode, oldVNode)) {
       diff(
         parentDom,
         newVNode,
         oldVNode,
         isSvg,
         commitQueue,
-        refQueue
+        refQueue,
+        oldDom
       )
 
       j++
       if (j > oldEndIdx || j > newEndIdx) break outer
       oldVNode = oldChildren[j] || EMPTY_OBJ
-      newVNode = newChildren[j]
+      newVNode = newChildren[j];
     }
 
     oldVNode = oldChildren[oldEndIdx] || EMPTY_OBJ
-    newVNode = newChildren[newEndIdx]
+    newVNode = newChildren[newEndIdx];
 
-    while (oldVNode.type === newVNode.type) {
+    // Sync nodes with the same key at the end.
+    while (isSameVNode(newVNode, oldVNode)) {
       diff(
         parentDom,
         newVNode,
@@ -72,7 +72,7 @@ export function diffChildren(
       if (j > oldEndIdx || j > newEndIdx) break outer
 
       oldVNode = oldChildren[oldEndIdx] || EMPTY_OBJ
-      newVNode = newChildren[newEndIdx]
+      newVNode = newChildren[newEndIdx];
     }
   }
 
@@ -80,37 +80,150 @@ export function diffChildren(
     let nextPos = newEndIdx + 1,
       refNode = nextPos >= newChildren.length
         ? null
-        : newChildren[nextPos].el;
+        : newChildren[nextPos]._dom;
 
+    // Create new _dom
     while (j <= newEndIdx) {
-      let childVNode = newChildren[j++]
+      let childVNode = newChildren[j];
+      j++
       diff(
         parentDom,
         childVNode,
-        oldVNode,
+        EMPTY_OBJ,
         isSvg,
         commitQueue,
         refQueue,
       )
-      insert(childVNode, null, parentDom);
+      __insertOrAppend(parentDom, childVNode, refNode)
     }
-  } else if (j > newEndIdx && j <= newEndIdx) {
-    while (j <= newEndIdx) {
+  } else if (j > newEndIdx && j <= oldEndIdx) {
+    while (j <= oldEndIdx) {
       // Remove nodes
+      remove(oldChildren[j++]._dom, parentDom);
     }
   } else {
-    
+    let oldStartIdx = j,
+      newStartIdx = j,
+      newLeft = newEndIdx - newStartIdx + 1,
+      source = new Array(newLeft).fill(-1),
+      newIdxMap = {},
+      patched = 0,
+      move = false,
+      endIdx = 0;
+
+    for (let i = newStartIdx; i <= newEndIdx; i++) {
+      let key = newChildren[i].key
+      newIdxMap[key] = i
+    }
+
+    for (let i = oldStartIdx; i <= oldEndIdx; i++) {
+      let oldNode = oldChildren[i],
+        oldNodeKey = oldNode.key,
+        newIdx = newIdxMap[oldNodeKey];
+
+      if (newIdx === undefined) {
+        // remove(oldNode._dom, parentDom);
+        // oldParentVNode._children = newParentVNode._children;
+        continue
+      }
+
+      let newNode = newChildren[newIdx]
+      // patch
+      diff(
+        parentDom,
+        newNode,
+        oldNode,
+        isSvg,
+        commitQueue,
+        refQueue,
+      )
+      source[newIdx - newStartIdx] = i
+      patched++
+
+      if (newIdx < endIdx) {
+        move = true
+      } else {
+        endIdx = newIdx
+      }
+    }
+
+    if (move) {
+      const seq = lisAlgorithm(source) // {@link https://leetcode.com/problems/longest-increasing-subsequence/}
+      let j = seq.length - 1
+
+      for (let i = newLeft - 1; i >= 0; i--) {
+        let pos = newStartIdx + i,
+          newNode = newChildren[pos],
+          newPos = pos + 1,
+          refNode = newPos >= newChildren.length ? null : newChildren[newPos]._dom,
+          cur = source[i];
+
+        if (cur === -1) {
+          // New node appear
+          diff(
+            parentDom,
+            newNode,
+            EMPTY_OBJ,
+            isSvg,
+            commitQueue,
+            refQueue
+          )
+          __insertOrAppend(parentDom, newNode, refNode)
+        } else if (cur === seq[j]) {
+          j--
+        } else {
+          __insertOrAppend(parentDom, newNode, refNode)
+        }
+      }
+    } else {
+      for (let i = newLeft - 1; i >= 0; i--) {
+        let cur = source[i]
+
+        if (cur === -1) {
+          let pos = newStartIdx + i,
+            newNode = newChildren[pos],
+            newPos = pos + 1,
+            refNode = newPos >= newChildren.length ? null : newChildren[newPos]._dom
+
+          // mount
+          diff(
+            parentDom,
+            newNode,
+            EMPTY_OBJ,
+            isSvg,
+            commitQueue,
+            refQueue
+          )
+          __insertOrAppend(parentDom, newNode, refNode)
+        }
+      }
+    }
   }
 }
 
-function constructNewChildrenArray(newParentVNode) {
+function isSameVNode(newVNode, oldVNode) {
+  let key = newVNode.key,
+    type = newVNode.type;
+
+  return (
+    oldVNode === null ||
+    (oldVNode &&
+      key == oldVNode.key &&
+      type === oldVNode.type)
+  )
+}
+
+export const normalizeKey = ({ key }) => key != null ? key : null
+export function normalizeChildren(children) {
   let i,
     childVNode;
 
-  let newChildrenLength = newParentVNode._children.length
+  let _children = !children ? null : toArray(children);
 
-  for (i = 0; i < newChildrenLength; i++) {
-    childVNode = newParentVNode._children[i];
+  if (_children === null) return null
+
+  for (i = 0; i < _children.length; i++) {
+    childVNode = _children[i];
     if (
       typeof childVNode == 'string' ||
       typeof childVNode == 'number' ||
@@ -118,42 +231,28 @@ function constructNewChildrenArray(newParentVNode) {
       typeof childVNode == 'bigint' ||
       childVNode.constructor == String
     ) {
-      childVNode = newParentVNode._children[i] = createVNode(
-        null,
+      childVNode = _children[i] = createTextNode(
         childVNode,
         null,
-        null,
-        null
       );
     } else if (isArray(childVNode)) {
-      childVNode = newParentVNode._children[i] = createVNode(
+      childVNode = _children[i] = createVNode(
         Fragment,
         { children: childVNode },
         null,
         null,
         null
       );
-    } else if (childVNode.constructor === undefined && childVNode._depth > 0) {
-      // VNode is already in use, clone it. This can happen in the following
-      // scenario:
-      //   const reuse = <div />
-      //   <div>{reuse}<span />{reuse}</div>
-      childVNode = newParentVNode._children[i] = createVNode(
-        childVNode.type,
-        childVNode.props,
-        childVNode.key,
-        childVNode.ref ? childVNode.ref : null,
-        childVNode._original
-      );
     } else {
-      childVNode = newParentVNode._children[i] = childVNode;
+      childVNode = _children[i] = childVNode;
     }
   }
+  return _children;
 }
 
-function insert(parentVNode, oldDom, parentDom) {
-  if (parentVNode._dom != oldDom) {
-    parentDom.insertBefore(parentVNode._dom, oldDom || null);
-    oldDom = parentVNode._dom;
+function __insertOrAppend(parentDom, newNode, refNode) {
+  // Mounting a DOM VNode
+  if (!isFunction(newNode.type)) {
+    insertOrAppend(parentDom, newNode._dom, refNode)
   }
 }

@@ -1,6 +1,14 @@
 import { isFunction } from './shared/is.js'
 import { slice } from './shared/array.js'
 
+export const VNodeFlags = {
+  Unknown: 0,
+  HtmlElement: 1,
+  Component: 1 << 1,
+  Text: 1 << 2,
+  SvgElement: 1 << 3,
+}
+
 export function createElement(type, props, children) {
   let normalizedProps = {},
     key,
@@ -30,7 +38,7 @@ export function createElement(type, props, children) {
   return createVNode(type, normalizedProps, key, ref, null)
 }
 
-export function createVNode(type, props, key, ref, original) {
+export function createVNode(type, props, key, ref, flags) {
   /**
    * type: the node name or Component
    */
@@ -39,11 +47,10 @@ export function createVNode(type, props, key, ref, original) {
     props,
     key,
     ref,
+    flags,
 
-    _children: null,
     _parent: null,
-
-    _sibling: undefined,
+    _children: null,
 
     _component: null,
     
@@ -51,6 +58,18 @@ export function createVNode(type, props, key, ref, original) {
   }
 
   return vnode;
+}
+
+export function createTextNode(text, key) {
+  return {
+    type: null,
+    props: text,
+    key: key,
+    ref: null,
+    flags: VNodeFlags.Text,
+
+    _parent: null,
+  }
 }
 
 export function createRef() {

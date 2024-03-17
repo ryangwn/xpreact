@@ -10,3 +10,34 @@ export function assign(obj, props) {
 	for (let i in props) obj[i] = props[i];
 	return /** @type {O & P} */ (obj);
 }
+
+export function shallowCompare(newObj, prevObj) {
+	for (const key in newObj) {
+		if (newObj[key] !== prevObj[key]) return true;
+	}
+	return false;
+}
+
+export function objectLiteral(obj) {
+	return (
+		obj != null &&
+		typeof obj === 'object' &&
+		!Array.isArray(obj) &&
+		!(obj instanceof RegExp) &&
+		!(obj instanceof Date)
+	)
+}
+
+export function emptyObject(obj) {
+	if (!objectLiteral(obj)) {
+		return false
+	}
+
+	for (let key in obj) {
+		if (hasOwnProperty.call(obj, key)) {
+			return false
+		}
+	}
+
+	return true
+}

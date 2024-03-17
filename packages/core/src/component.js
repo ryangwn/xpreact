@@ -1,8 +1,10 @@
 import { assign } from './shared/object.js'
 import { diff } from './diff'
+import { RE_RENDER } from './constants'
 
 export function BaseComponent(props, context) {
   this.props = props;
+  this.context = context;
 }
 
 BaseComponent.prototype.setState = function () {
@@ -12,7 +14,9 @@ BaseComponent.prototype.setState = function () {
 }
 
 BaseComponent.prototype.forceUpdate = function () {
-
+  if (this._vnode) {
+    enqueueRender(this)
+  }
 }
 
 BaseComponent.prototype.render = function () {
@@ -30,8 +34,7 @@ function renderComponent(component, commitQueue, refQueue) {
 
   if (parentDom) {
 		const newVNode = assign({}, oldVNode);
-    newVNode._renderStart = 1;
-
+    newVNode._flags = RE_RENDER;
     diff(
       parentDom,
       newVNode,
@@ -41,7 +44,7 @@ function renderComponent(component, commitQueue, refQueue) {
       refQueue
     )
 
-    newVNode._renderStart = 0;
+    newVNode._flags = null;
   }
 }
 
