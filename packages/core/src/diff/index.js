@@ -86,7 +86,7 @@ export function diff(
     }
 
     let isTopLevelFragment = tmp != null && tmp.type === Fragment && tmp.key == null;
-    newVNode._children = toArray(isTopLevelFragment 
+    newVNode._children = toArray(isTopLevelFragment
       ? tmp.props.children
       : tmp
     );

@@ -29,11 +29,11 @@ BaseComponent.prototype.render = function () {
  */
 function renderComponent(component, commitQueue, refQueue) {
   let oldVNode = component._vnode,
-  oldDom = oldVNode._dom,
-  parentDom = component._parentDom;
+    parentDom = component._parentDom;
 
   if (parentDom) {
 		const newVNode = assign({}, oldVNode);
+
     newVNode._flags = RE_RENDER;
     diff(
       parentDom,
@@ -43,6 +43,8 @@ function renderComponent(component, commitQueue, refQueue) {
       commitQueue,
       refQueue
     )
+
+    newVNode._parent._children[newVNode._index] = newVNode;
 
     newVNode._flags = null;
   }

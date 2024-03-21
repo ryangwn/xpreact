@@ -3,7 +3,25 @@ import { render } from 'xpreact';
 import { useState } from 'xpreact/hooks';
 import { state } from 'xpreact/runes';
 
-const arr = [1, 2, 3, 4, 5];
+const arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+
+function shuffle(array) {
+  let currentIndex = array.length,  randomIndex;
+
+  // While there remain elements to shuffle.
+  while (currentIndex > 0) {
+
+    // Pick a remaining element.
+    randomIndex = Math.floor(Math.random() * currentIndex);
+    currentIndex--;
+
+    // And swap it with the current element.
+    [array[currentIndex], array[randomIndex]] = [
+      array[randomIndex], array[currentIndex]];
+  }
+
+  return [...array];
+}
 
 function Mapp() {
 	const [suffer, setSuffer] = useState(arr);
@@ -13,7 +31,7 @@ function Mapp() {
 			<ul>
 				{suffer.map(item => (<li key={item}>{item}</li>))}
 			</ul>
-			<button onClick={() => setSuffer([1, 6, 7, 2, 3, 5, 4])}>Shffer</button>
+			<button onClick={() => setSuffer([5, 6, 1, 2, 3, 4, 8, 9, 10, 7])}>Shffer</button>
 		</>
 	)
 }

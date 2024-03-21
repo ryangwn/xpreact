@@ -2,7 +2,7 @@ import { createVNode, createTextNode } from '../create-element'
 import { INSERT_VNODE, EMPTY_ARR, EMPTY_OBJ } from '../constants'
 import { diff } from './index'
 import { isArray, toArray, isFunction, lisAlgorithm } from '../shared'
-import { insertOrAppend, remove } from '../dom/api'
+import { insertOrAppend as insertOrAppendApi, remove } from '../dom/api'
 
 /**
  * Diff the children of a virtual node
@@ -43,10 +43,11 @@ export function diffChildren(
         isSvg,
         commitQueue,
         refQueue,
-        oldDom
       )
 
-      j++
+      newVNode._index = j++;
+      newVNode._parent = newParentVNode;
+
       if (j > oldEndIdx || j > newEndIdx) break outer
       oldVNode = oldChildren[j] || EMPTY_OBJ
       newVNode = newChildren[j];
@@ -63,8 +64,11 @@ export function diffChildren(
         oldVNode,
         isSvg,
         commitQueue,
-        refQueue
+        refQueue,
       )
+
+      newVNode._index = newEndIdx;
+      newVNode._parent = newParentVNode;
 
       oldEndIdx--
       newEndIdx--
@@ -85,7 +89,6 @@ export function diffChildren(
     // Create new _dom
     while (j <= newEndIdx) {
       let childVNode = newChildren[j];
-      j++
       diff(
         parentDom,
         childVNode,
@@ -94,12 +97,15 @@ export function diffChildren(
         commitQueue,
         refQueue,
       )
-      __insertOrAppend(parentDom, childVNode, refNode)
+      childVNode._index = j;
+      childVNode._parent = newParentVNode;
+      insertOrAppend(parentDom, childVNode, refNode);
+      j++
     }
   } else if (j > newEndIdx && j <= oldEndIdx) {
     while (j <= oldEndIdx) {
       // Remove nodes
-      remove(oldChildren[j++]._dom, parentDom);
+      remove(parentDom, oldChildren[j++]._dom);
     }
   } else {
     let oldStartIdx = j,
@@ -122,8 +128,7 @@ export function diffChildren(
         newIdx = newIdxMap[oldNodeKey];
 
       if (newIdx === undefined) {
-        // remove(oldNode._dom, parentDom);
-        // oldParentVNode._children = newParentVNode._children;
+        remove(parentDom, oldNode._dom);
         continue
       }
 
@@ -154,11 +159,9 @@ export function diffChildren(
       for (let i = newLeft - 1; i >= 0; i--) {
         let pos = newStartIdx + i,
           newNode = newChildren[pos],
-          newPos = pos + 1,
-          refNode = newPos >= newChildren.length ? null : newChildren[newPos]._dom,
-          cur = source[i];
+          refNode = pos + 1 >= newChildren.length ? null : newChildren[newPos]._dom;
 
-        if (cur === -1) {
+        if (source[i] === -1) {
           // New node appear
           diff(
             parentDom,
@@ -168,18 +171,19 @@ export function diffChildren(
             commitQueue,
             refQueue
           )
-          __insertOrAppend(parentDom, newNode, refNode)
-        } else if (cur === seq[j]) {
-          j--
+          insertOrAppend(parentDom, newNode, refNode)
+        } else if (j < 0 || i != seq[j]) {
+          insertOrAppend(parentDom, newNode, refNode)
         } else {
-          __insertOrAppend(parentDom, newNode, refNode)
+          j--
         }
+
+        newNode._index = pos;
+        newNode._parent = newParentVNode;
       }
     } else {
       for (let i = newLeft - 1; i >= 0; i--) {
-        let cur = source[i]
-
-        if (cur === -1) {
+        if (source[i] === -1) {
           let pos = newStartIdx + i,
             newNode = newChildren[pos],
             newPos = pos + 1,
@@ -194,7 +198,10 @@ export function diffChildren(
             commitQueue,
             refQueue
           )
-          __insertOrAppend(parentDom, newNode, refNode)
+          newNode._index = pos;
+          newNode._parent = newParentVNode;
+
+          insertOrAppend(parentDom, newNode, refNode)
         }
       }
     }
@@ -216,43 +223,76 @@ function isSameVNode(newVNode, oldVNode) {
 export const normalizeKey = ({ key }) => key != null ? key : null
 export function normalizeChildren(children) {
   let i,
-    childVNode;
+    childVNode,
+    _children = toArray(children);
 
-  let _children = !children ? null : toArray(children);
-
-  if (_children === null) return null
-
-  for (i = 0; i < _children.length; i++) {
-    childVNode = _children[i];
-    if (
-      typeof childVNode == 'string' ||
-      typeof childVNode == 'number' ||
-      // eslint-disable-next-line valid-typeof
-      typeof childVNode == 'bigint' ||
-      childVNode.constructor == String
-    ) {
-      childVNode = _children[i] = createTextNode(
-        childVNode,
-        null,
-      );
-    } else if (isArray(childVNode)) {
-      childVNode = _children[i] = createVNode(
-        Fragment,
-        { children: childVNode },
-        null,
-        null,
-        null
-      );
-    } else {
-      childVNode = _children[i] = childVNode;
+  if (typeof children != null) {
+    for (i = 0; i < _children.length; i++) {
+      childVNode = _children[i];
+      if (
+        typeof childVNode == 'string' ||
+        typeof childVNode == 'number' ||
+        // eslint-disable-next-line valid-typeof
+        typeof childVNode == 'bigint' ||
+        childVNode.constructor == String
+      ) {
+        childVNode = _children[i] = createTextNode(
+          childVNode,
+          null,
+        );
+      } else if (isArray(childVNode)) {
+        childVNode = _children[i] = createVNode(
+          Fragment,
+          { children: childVNode },
+          null,
+          null,
+          null
+        );
+      } else {
+        childVNode = _children[i] = childVNode;
+      }
+      childVNode._index = i;
     }
   }
+
   return _children;
 }
 
-function __insertOrAppend(parentDom, newNode, refNode) {
+function insertOrAppend(parentDom, newNode, refNode) {
   // Mounting a DOM VNode
   if (!isFunction(newNode.type)) {
-    insertOrAppend(parentDom, newNode._dom, refNode)
+    insertOrAppendApi(parentDom, newNode._dom, refNode)
   }
+}
+
+function lis(nums) {
+  if (nums.length === 0) return [];
+
+  const n = nums.length;
+  const lisLengths = new Array(n).fill(1);
+  const prevIndices = new Array(n).fill(-1);
+  let maxLength = 1;
+  let lastIndex = 0;
+
+  for (let i = 1; i < n; i++) {
+    for (let j = 0; j < i; j++) {
+      if (nums[i] > nums[j] && lisLengths[i] < lisLengths[j] + 1) {
+        lisLengths[i] = lisLengths[j] + 1;
+        prevIndices[i] = j;
+        if (lisLengths[i] > maxLength) {
+          maxLength = lisLengths[i];
+          lastIndex = i;
+        }
+      }
+    }
+  }
+
+  const lis = [];
+  let currentIndex = lastIndex;
+  while (currentIndex !== -1) {
+    lis.push(nums[currentIndex]);
+    currentIndex = prevIndices[currentIndex];
+  }
+
+  return lis.reverse();
 }
