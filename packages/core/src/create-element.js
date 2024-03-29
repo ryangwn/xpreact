@@ -1,5 +1,5 @@
-import { isFunction } from './shared/is.js'
-import { slice } from './shared/array.js'
+import { isFunction } from './shared/is'
+import { slice } from './shared/array'
 
 export const VNodeFlags = {
   Unknown: 0,
@@ -54,8 +54,6 @@ export function createVNode(type, props, key, ref, flags) {
 
     _component: null,
 
-    _index: -1,
-    
     constructor: undefined
   }
 

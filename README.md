@@ -15,5 +15,5 @@ function StaticNode() {
 ```
 
 ## Inspired
-- [preact](https://preactjs.com/)
-- [inferno](https://www.infernojs.org/)
+- [Preact](https://preactjs.com/)
+- [Inferno](https://www.infernojs.org/)

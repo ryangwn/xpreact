@@ -8,6 +8,14 @@ export function insertBefore(parentDom, newNode, nextNode) {
   parentDom.insertBefore(newNode, nextNode)
 }
 
+export function insert(parentDom, newNode, nextNode) {
+  if (isNull(nextNode)) {
+    appendChild(parentDom, newNode)
+  } else {
+    insertBefore(parentDom, newNode, nextNode)
+  }
+}
+
 export function insertOrAppend(parentDom, newNode, nextNode) {
   if (isNull(nextNode)) {
     appendChild(parentDom, newNode)

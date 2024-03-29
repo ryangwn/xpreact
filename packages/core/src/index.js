@@ -3,8 +3,8 @@ export {
   createElement as h,
   createVNode,
   Fragment
-} from './create-element.js'
+} from './create-element'
 
-export { render } from './render.js'
+export { render } from './render'
 
-export { options } from './options.js'
+export { options } from './options'

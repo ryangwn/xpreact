@@ -7,6 +7,9 @@ export function setProperty(dom, name, value, oldValue, isSvg) {
     if (typeof value === 'string') {
       dom.style.cssText = value;
     }
+  } else if (name === 'class') {
+    // Todo: Implement basic className func for class process
+    dom.className = value;
   } else if (name[0] === 'o' && name[1] === 'n') {
     useCapture =
       name !== (name = name.replace(/(PointerCapture)$|Capture$/i, '$1'));

@@ -3,23 +3,26 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "demo:dev": "pnpm --filter=demo dev"
+    "dev:demo": "pnpm --filter=demo dev",
+    "build:core": "pnpm --filter=xpreact-core build"
   },
+  "type": "module",
   "keywords": [],
   "author": "ryan",
   "license": "ISC",
   "exports": {
     ".": {
       "types": "./packages/core/src/index.d.ts",
-      "import": "./packages/core/src/index.js"
+      "import": "./packages/core/src/index.js",
+      "require": "./packages/core/src/index.js"
     },
     "./hooks": {
       "types": "./packages/hooks/src/index.d.ts",
       "import": "./packages/hooks/src/index.js"
     },
     "./runes": {
-      "types": "./packages/runes/src/index.d.ts",
-      "import": "./packages/runes/src/index.js"
+      "types": "./packages/signals/src/index.d.ts",
+      "import": "./packages/signals/src/index.js"
     },
     "./jsx-runtime": {
       "types": "./packages/jsx-runtime/src/index.d.ts",
@@ -29,5 +32,11 @@
       "types": "./packages/jsx-runtime/src/index.d.ts",
       "import": "./packages/jsx-runtime/src/index.js"
     }
+  },
+  "devDependencies": {
+    "esbuild": "^0.20.2",
+    "rollup": "^4.13.0",
+    "rollup-plugin-copy": "^3.5.0",
+    "rollup-plugin-esbuild": "^6.1.1"
   }
 }

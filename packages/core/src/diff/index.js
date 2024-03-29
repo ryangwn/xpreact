@@ -1,11 +1,11 @@
-import { options } from '../options'
-import { BaseComponent } from '../component'
-import { Fragment, createVNode } from '../create-element'
-import { diffChildren, normalizeChildren } from './children'
-import { EMPTY_OBJ, EMPTY_ARR, RE_RENDER } from '../constants'
-import { toArray, shallowCompare, assign, isFunction } from '../shared'
-import { setProperty } from './props'
-import { setTextContent } from '../dom/api'
+import { options } from "../options";
+import { BaseComponent } from "../component";
+import { Fragment, createVNode } from "../create-element";
+import { diffChildren, normalizeChildren } from "./children";
+import { EMPTY_OBJ, EMPTY_ARR, RE_RENDER } from "../constants";
+import { toArray, shallowCompare, assign, isFunction } from "../shared";
+import { setProperty } from "./props";
+import { setTextContent } from "../dom/api";
 
 export function diff(
   parentDom,
@@ -18,10 +18,11 @@ export function diff(
   let tmp,
     newType = newVNode.type;
 
-  if ((tmp = options._diff)) tmp(newVNode)
+  if ((tmp = options._diff)) tmp(newVNode);
 
   outer: if (isFunction(newType)) {
-    let c, isNew,
+    let c,
+      isNew,
       oldProps = oldVNode.props || EMPTY_OBJ;
     let newProps = newVNode.props;
 
@@ -29,10 +30,10 @@ export function diff(
     if (oldVNode._component) {
       c = newVNode._component = oldVNode._component;
     } else {
-      if ('prototype' in newType && newType.prototype.render) {
+      if ("prototype" in newType && newType.prototype.render) {
         newVNode._component = c = new newType(newProps);
       } else {
-        newVNode._component = c = new BaseComponent(newProps)
+        newVNode._component = c = new BaseComponent(newProps);
         c.constructor = newType;
         c.render = doRender; // Will call newType func
       }
@@ -51,10 +52,10 @@ export function diff(
 
     let renderHook = options._render,
       count = 0;
-    if ('prototype' in newType && newType.prototype.render) {
-      c.state = c._nextState
+    if ("prototype" in newType && newType.prototype.render) {
+      c.state = c._nextState;
 
-      if (renderHook) renderHook(newVNode)
+      if (renderHook) renderHook(newVNode);
 
       tmp = c.render(c.props, c.state);
 
@@ -66,7 +67,7 @@ export function diff(
       do {
         if (
           !shallowCompare(oldVNode, {}) ||
-          (c._flags & RE_RENDER) ||
+          c._flags & RE_RENDER ||
           shallowCompare(c.props, oldProps)
         ) {
           c._dirty = false;
@@ -76,7 +77,7 @@ export function diff(
           tmp = c.render(c.props, c.state, c.context);
 
           c.state = c._nextState;
-        } // If same VNode don't need to re-create components 
+        } // If same VNode doesn't need to re-create components
         else {
           c._dirty = false;
           copyVNode(newVNode, oldVNode);
@@ -85,20 +86,11 @@ export function diff(
       } while (c._dirty && ++count < 25);
     }
 
-    let isTopLevelFragment = tmp != null && tmp.type === Fragment && tmp.key == null;
-    newVNode._children = toArray(isTopLevelFragment
-      ? tmp.props.children
-      : tmp
-    );
+    let isTopLevelFragment =
+      tmp != null && tmp.type === Fragment && tmp.key == null;
+    newVNode._children = toArray(isTopLevelFragment ? tmp.props.children : tmp);
 
-    diffChildren(
-      parentDom,
-      newVNode,
-      oldVNode,
-      isSvg,
-      commitQueue,
-      refQueue
-    )
+    diffChildren(parentDom, newVNode, oldVNode, isSvg, commitQueue, refQueue);
   } else {
     newVNode._dom = diffElementNodes(
       oldVNode._dom,
@@ -106,11 +98,11 @@ export function diff(
       oldVNode,
       isSvg,
       commitQueue,
-      refQueue
+      refQueue,
     );
   }
 
-  if ((tmp = options._diffed)) tmp(newVNode)
+  if ((tmp = options._diffed)) tmp(newVNode);
 }
 
 /**
@@ -118,8 +110,8 @@ export function diff(
  * @param {Element} dom the dom element representing the virtual nodes being diffed
  * @param {*} newVNode the new virtual node
  * @param {*} oldVNode the old virtual node
- * @param {*} commitQueue 
- * @param {*} refQueue 
+ * @param {*} commitQueue
+ * @param {*} refQueue
  */
 function diffElementNodes(
   dom,
@@ -127,20 +119,17 @@ function diffElementNodes(
   oldVNode,
   isSvg,
   commitQueue,
-  refQueue
+  refQueue,
 ) {
-  let i,
-    value,
-    newChildren,
-    newHtml;
+  let i, value, newChildren, newHtml;
 
   let oldProps = oldVNode.props || EMPTY_OBJ;
   let newProps = newVNode.props || EMPTY_OBJ;
 
-  let nodeType = /** @type {string} */(newVNode.type);
+  let nodeType = /** @type {string} */ (newVNode.type);
 
   // Tracks entering and exiting SVG namespace when descending through the tree.
-  if (nodeType === 'svg') isSvg = true;
+  if (nodeType === "svg") isSvg = true;
 
   /**
    * Create dom element at first render call or //
@@ -151,7 +140,7 @@ function diffElementNodes(
     }
 
     if (isSvg) {
-      dom = document.createElementNS('http://www.w3.org/2000/svg', nodeType);
+      dom = document.createElementNS("http://www.w3.org/2000/svg", nodeType);
     } else {
       dom = document.createElement(nodeType, newProps.is && newProps);
     }
@@ -160,32 +149,31 @@ function diffElementNodes(
   // nodeType = null is number|string node (replace textContent)
   if (nodeType === null) {
     if (oldProps !== newProps && dom.data !== newProps) {
-      setTextContent(dom, newProps)
+      setTextContent(dom, newProps);
     }
   } else {
-
     for (i in oldProps) {
       value = oldProps[i];
-      if (i == 'children') {
-      } else if (i == 'dangerouslySetInnerHTML') {
-        oldHtml = value
-      } else if (i !== 'key' && !(i in newProps)) {
+      if (i == "children") {
+      } else if (i == "dangerouslySetInnerHTML") {
+        oldHtml = value;
+      } else if (i !== "key" && !(i in newProps)) {
         setProperty(dom, i, null, oldProps[i], isSvg);
       }
     }
 
     for (i in newProps) {
       value = newProps[i];
-      if (i == 'children') {
+      if (i == "children") {
         newChildren = normalizeChildren(value);
-      } else if (i == 'dangerouslySetInnerHTML') {
+      } else if (i == "dangerouslySetInnerHTML") {
         newHtml = value;
-      } else if (i == 'value') {
+      } else if (i == "value") {
         inputValue = value;
-      } else if (i == 'checked') {
+      } else if (i == "checked") {
         checked = value;
       } else if (
-        i !== 'key' &&
+        i !== "key" &&
         // (!isHydrated && typeof value == 'function') &&
         oldProps[i] !== value
       ) {
@@ -193,20 +181,20 @@ function diffElementNodes(
       }
     }
 
-
     if (newHtml) {
-
     } else {
-      newVNode._children = !newChildren ? null : toArray(newChildren)
-      diffChildren(
-        dom,
-        newVNode,
-        oldVNode,
-        isSvg,
-        commitQueue,
-        null,
-        refQueue
-      )
+      if (oldVNode._children || newChildren) {
+        newVNode._children = toArray(newChildren);
+        diffChildren(
+          dom,
+          newVNode,
+          oldVNode,
+          isSvg,
+          commitQueue,
+          null,
+          refQueue,
+        );
+      }
     }
   }
 
