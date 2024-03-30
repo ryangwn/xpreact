@@ -26,7 +26,7 @@ export function diffChildren(
   let oldChildren = (oldParentVNode && oldParentVNode._children) || EMPTY_ARR;
   let newChildren = newParentVNode._children || EMPTY_ARR;
 
-  // Todo: oldDom([]) -> newDom(null)
+  // Todo: oldDom([]) -> newDom(null) unmount process
   if (!newChildren.length) {
     parentDom.textContent = "";
     return
@@ -42,32 +42,35 @@ export function diffChildren(
   outer: {
     // Sync nodes with the same key at the beginning.
     while (isSameVNode(newVNode, oldVNode)) {
-      diff(parentDom, newVNode, oldVNode, isSvg, commitQueue, refQueue);
+      diff(
+        parentDom,
+        newVNode,
+        oldVNode,
+        isSvg,
+        commitQueue,
+        refQueue
+      );
 
-      newVNode._index = j++;
-      newVNode._parent = newParentVNode;
+      j++
 
       if (j > oldEndIdx || j > newEndIdx) break outer;
-      oldVNode = oldChildren[j] || EMPTY_OBJ;
+      oldVNode = oldChildren[j];
       newVNode = newChildren[j];
     }
 
-    oldVNode = oldChildren[oldEndIdx] || EMPTY_OBJ;
+    oldVNode = oldChildren[oldEndIdx];
     newVNode = newChildren[newEndIdx];
 
     // Sync nodes with the same key at the end.
     while (isSameVNode(newVNode, oldVNode)) {
       diff(parentDom, newVNode, oldVNode, isSvg, commitQueue, refQueue);
 
-      newVNode._index = newEndIdx;
-      newVNode._parent = newParentVNode;
-
       oldEndIdx--;
       newEndIdx--;
 
       if (j > oldEndIdx || j > newEndIdx) break outer;
 
-      oldVNode = oldChildren[oldEndIdx] || EMPTY_OBJ;
+      oldVNode = oldChildren[oldEndIdx];
       newVNode = newChildren[newEndIdx];
     }
   }
@@ -80,9 +83,14 @@ export function diffChildren(
     // Create new _dom
     while (j <= newEndIdx) {
       let childVNode = newChildren[j];
-      diff(parentDom, childVNode, EMPTY_OBJ, isSvg, commitQueue, refQueue);
-      childVNode._index = j;
-      childVNode._parent = newParentVNode;
+      diff(
+        parentDom,
+        childVNode,
+        EMPTY_OBJ,
+        isSvg,
+        commitQueue,
+        refQueue
+      );
       insert(parentDom, childVNode, refNode);
       j++;
     }
@@ -151,9 +159,6 @@ export function diffChildren(
           j--;
         }
       }
-
-      newNode._index = pos;
-      newNode._parent = newParentVNode;
     }
   }
 }
@@ -168,15 +173,15 @@ function isSameVNode(newVNode, oldVNode) {
   );
 }
 
-export const normalizeKey = ({ key }) => (key != null ? key : null);
+// export const normalizeKey = ({ key }) => (key != null ? key : null);
 export function normalizeChildren(children) {
   let i,
     childVNode,
-    _children = toArray(children);
+    normalizedChildren = toArray(children);
 
   if (typeof children != null) {
-    for (i = 0; i < _children.length; i++) {
-      childVNode = _children[i];
+    for (i = 0; i < normalizedChildren.length; i++) {
+      childVNode = normalizedChildren[i];
       if (
         typeof childVNode == "string" ||
         typeof childVNode == "number" ||
@@ -184,9 +189,9 @@ export function normalizeChildren(children) {
         typeof childVNode == "bigint" ||
         childVNode.constructor == String
       ) {
-        childVNode = _children[i] = createTextNode(childVNode, null);
+        normalizedChildren[i] = createTextNode(childVNode, null);
       } else if (isArray(childVNode)) {
-        childVNode = _children[i] = createVNode(
+         normalizedChildren[i] = createVNode(
           Fragment,
           { children: childVNode },
           null,
@@ -194,13 +199,12 @@ export function normalizeChildren(children) {
           null,
         );
       } else {
-        childVNode = _children[i] = childVNode;
+        normalizedChildren[i] = childVNode;
       }
-      childVNode._index = i;
     }
   }
 
-  return _children;
+  return normalizedChildren;
 }
 
 function move(parentDom, newNode, refNode) {

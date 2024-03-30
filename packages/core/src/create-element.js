@@ -49,7 +49,6 @@ export function createVNode(type, props, key, ref, flags) {
     ref,
     flags,
 
-    _parent: null,
     _children: null,
 
     _component: null,
@@ -67,8 +66,6 @@ export function createTextNode(text, key) {
     key: key,
     ref: null,
     flags: VNodeFlags.Text,
-
-    _parent: null,
   }
 }
 

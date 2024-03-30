@@ -35,6 +35,7 @@ function renderComponent(component, commitQueue, refQueue) {
 		const newVNode = assign({}, oldVNode);
 
     newVNode._flags = RE_RENDER;
+
     diff(
       parentDom,
       newVNode,
@@ -43,8 +44,8 @@ function renderComponent(component, commitQueue, refQueue) {
       commitQueue,
       refQueue
     )
-
-    newVNode._parent._children[newVNode._index] = newVNode;
+    // Pointer to parent
+    oldVNode._children = newVNode._children;
 
     newVNode._flags = null;
   }

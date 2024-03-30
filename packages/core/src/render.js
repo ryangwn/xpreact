@@ -23,7 +23,6 @@ export function render(vnode, parentDom) {
     refQueue,
   )
 
-  vnode._nextDom = undefined;
   // Execute available Lifecycle methods
   // commitRoot(commitQueue, vnode, refQueue);
 }

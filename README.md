@@ -1,6 +1,7 @@
 ## In-progess
 
-day 02/03
+
+Day 02/03
 - impelement component base
 - implement diff algrothim
 - implement hooks
@@ -13,6 +14,12 @@ function StaticNode() {
   )
 }
 ```
+
+Todo:
+- remove _parent in vdom
+- use flags in vnode to define Component/Elements type
+- implemenet dangerouslySetInnerHTML
+
 
 ## Inspired
 - [Preact](https://preactjs.com/)

@@ -49,6 +49,11 @@ export function diff(
     c._flags = newVNode._flags;
 
     // Invoke pre-render lifecycle methods
+    if (isNew) {
+
+    } else {
+
+    }
 
     let renderHook = options._render,
       count = 0;
@@ -88,9 +93,19 @@ export function diff(
 
     let isTopLevelFragment =
       tmp != null && tmp.type === Fragment && tmp.key == null;
-    newVNode._children = toArray(isTopLevelFragment ? tmp.props.children : tmp);
+    newVNode._children = toArray(isTopLevelFragment
+      ? tmp.props.children
+      : tmp
+    );
 
-    diffChildren(parentDom, newVNode, oldVNode, isSvg, commitQueue, refQueue);
+    diffChildren(
+      parentDom,
+      newVNode,
+      oldVNode,
+      isSvg,
+      commitQueue,
+      refQueue
+    );
   } else {
     newVNode._dom = diffElementNodes(
       oldVNode._dom,
@@ -121,7 +136,7 @@ function diffElementNodes(
   commitQueue,
   refQueue,
 ) {
-  let i, value, newChildren, newHtml;
+  let i, value, newChildren, oldHtml, newHtml;
 
   let oldProps = oldVNode.props || EMPTY_OBJ;
   let newProps = newVNode.props || EMPTY_OBJ;
@@ -174,7 +189,6 @@ function diffElementNodes(
         checked = value;
       } else if (
         i !== "key" &&
-        // (!isHydrated && typeof value == 'function') &&
         oldProps[i] !== value
       ) {
         setProperty(dom, i, value, oldProps[i], isSvg);
@@ -182,7 +196,16 @@ function diffElementNodes(
     }
 
     if (newHtml) {
+      if (!oldHtml ||
+        (newHtml.__html !== oldHtml.__html &&
+          newHtml.__html !== dom.innerHTML)) {
+        dom.innerHTML = newHtml.__html
+      }
+
+      newVNode._children = [];
     } else {
+      if (oldHtml) dom.innerHTML = '';
+
       if (oldVNode._children || newChildren) {
         newVNode._children = toArray(newChildren);
         diffChildren(

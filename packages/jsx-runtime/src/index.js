@@ -32,12 +32,8 @@ function createVNode(type, props, key, isStaticChildren, __source, __self) {
 		ref,
 
 		_children: null,
-		_parent: null,
 		_dom: null,
-		// _nextDom: undefined,
 		_component: null,
-
-		_index: -1,
 
 		constructor: undefined,
 
