@@ -62,7 +62,7 @@ export function setProperty(dom, name, value, oldValue, isSvg) {
     // aria- and data- attributes
     if (isFunction(value)) {
       // ignore
-    } else if (value != null && (value !== false && name[4] === '-')) {
+    } else if (value != null && (value !== false || name[4] === '-')) {
       dom.setAttribute(name, value)
     } else {
       dom.removeAttribute(name)
