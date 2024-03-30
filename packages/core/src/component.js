@@ -1,6 +1,6 @@
 import { assign } from './shared/object.js'
 import { diff } from './diff'
-import { RE_RENDER } from './constants'
+import { RE_RENDER_VNODE } from './constants'
 
 export function BaseComponent(props, context) {
   this.props = props;
@@ -34,12 +34,13 @@ function renderComponent(component, commitQueue, refQueue) {
   if (parentDom) {
 		const newVNode = assign({}, oldVNode);
 
-    newVNode._flags = RE_RENDER;
+    newVNode._flags = RE_RENDER_VNODE;
 
     diff(
-      parentDom,
-      newVNode,
       oldVNode,
+      newVNode,
+      parentDom,
+      null,
       parentDom.ownerSVGElement !== undefined,
       commitQueue,
       refQueue

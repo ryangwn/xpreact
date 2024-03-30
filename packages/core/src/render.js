@@ -1,4 +1,4 @@
-import { EMPTY_OBJ } from './constants.js'
+import { EMPTY_OBJ, INSERT_VNODE } from './constants.js'
 import { Fragment, createElement } from './create-element.js'
 import { diff } from './diff'
 
@@ -13,11 +13,12 @@ export function render(vnode, parentDom) {
     refQueue = [];
 
   diff(
-    parentDom,
+    oldVNode || EMPTY_OBJ,
     // Determine the new vnode tree and store it on the DOM element on
     // our custom '_children' property
     vnode,
-    oldVNode || EMPTY_OBJ,
+    parentDom,
+    null,
     parentDom.ownerSVGElement !== undefined,
     commitQueue,
     refQueue,

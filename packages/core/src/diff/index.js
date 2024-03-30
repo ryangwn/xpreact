@@ -1,16 +1,17 @@
 import { options } from "../options";
 import { BaseComponent } from "../component";
-import { Fragment, createVNode } from "../create-element";
+import { Fragment } from "../create-element";
 import { diffChildren, normalizeChildren } from "./children";
-import { EMPTY_OBJ, EMPTY_ARR, RE_RENDER } from "../constants";
+import { EMPTY_OBJ, RE_RENDER_VNODE, INSERT_VNODE } from "../constants";
 import { toArray, shallowCompare, assign, isFunction } from "../shared";
 import { setProperty } from "./props";
-import { setTextContent } from "../dom/api";
+import { setTextContent, insert } from "../dom/api";
 
 export function diff(
-  parentDom,
-  newVNode,
   oldVNode,
+  newVNode,
+  parentDom,
+  anchor,
   isSvg,
   commitQueue,
   refQueue,
@@ -72,7 +73,7 @@ export function diff(
       do {
         if (
           !shallowCompare(oldVNode, {}) ||
-          c._flags & RE_RENDER ||
+          c._flags & RE_RENDER_VNODE ||
           shallowCompare(c.props, oldProps)
         ) {
           c._dirty = false;
@@ -85,7 +86,7 @@ export function diff(
         } // If same VNode doesn't need to re-create components
         else {
           c._dirty = false;
-          copyVNode(newVNode, oldVNode);
+          assign(newVNode, oldVNode);
           return;
         }
       } while (c._dirty && ++count < 25);
@@ -99,18 +100,21 @@ export function diff(
     );
 
     diffChildren(
-      parentDom,
-      newVNode,
       oldVNode,
+      newVNode,
+      parentDom,
       isSvg,
       commitQueue,
       refQueue
     );
   } else {
-    newVNode._dom = diffElementNodes(
-      oldVNode._dom,
-      newVNode,
+    newVNode._dom = oldVNode._dom
+
+    diffElementNodes(
       oldVNode,
+      newVNode,
+      parentDom,
+      anchor,
       isSvg,
       commitQueue,
       refQueue,
@@ -129,19 +133,31 @@ export function diff(
  * @param {*} refQueue
  */
 function diffElementNodes(
-  dom,
-  newVNode,
   oldVNode,
+  newVNode,
+  parentDom,
+  anchor,
   isSvg,
   commitQueue,
   refQueue,
 ) {
-  let i, value, newChildren, oldHtml, newHtml;
+  let
+    i,
+    value,
+    dom = oldVNode._dom || null,
+    newChildren,
+    oldHtml,
+    newHtml;
 
   let oldProps = oldVNode.props || EMPTY_OBJ;
-  let newProps = newVNode.props || EMPTY_OBJ;
+  let newProps = newVNode.props;
 
   let nodeType = /** @type {string} */ (newVNode.type);
+
+  if (nodeType === null) {
+    processTextNode(parentDom, oldVNode, newVNode, anchor);
+    return;
+  }
 
   // Tracks entering and exiting SVG namespace when descending through the tree.
   if (nodeType === "svg") isSvg = true;
@@ -150,82 +166,81 @@ function diffElementNodes(
    * Create dom element at first render call or //
    */
   if (dom == null) {
-    if (nodeType === null) {
-      return document.createTextNode(newProps);
-    }
-
     if (isSvg) {
-      dom = document.createElementNS("http://www.w3.org/2000/svg", nodeType);
+      dom = newVNode._dom = document.createElementNS("http://www.w3.org/2000/svg", nodeType);
     } else {
-      dom = document.createElement(nodeType, newProps.is && newProps);
+      dom = newVNode._dom = document.createElement(nodeType, newProps.is && newProps);
     }
   }
 
-  // nodeType = null is number|string node (replace textContent)
-  if (nodeType === null) {
-    if (oldProps !== newProps && dom.data !== newProps) {
-      setTextContent(dom, newProps);
+  for (i in oldProps) {
+    value = oldProps[i];
+    if (i == "children") {
+    } else if (i == "dangerouslySetInnerHTML") {
+      oldHtml = value;
+    } else if (i !== "key" && !(i in newProps)) {
+      setProperty(dom, i, null, oldProps[i], isSvg);
     }
+  }
+
+  for (i in newProps) {
+    value = newProps[i];
+    if (i == "children") {
+      newChildren = normalizeChildren(value);
+    } else if (i == "dangerouslySetInnerHTML") {
+      newHtml = value;
+    } else if (i == "value") {
+      inputValue = value;
+    } else if (i == "checked") {
+      checked = value;
+    } else if (
+      i !== "key" &&
+      oldProps[i] !== value
+    ) {
+      setProperty(dom, i, value, oldProps[i], isSvg);
+    }
+  }
+
+  if (newHtml) {
+    if (!oldHtml ||
+      (newHtml.__html !== oldHtml.__html &&
+        newHtml.__html !== dom.innerHTML)) {
+      dom.innerHTML = newHtml.__html
+    }
+
+    newVNode._children = [];
   } else {
-    for (i in oldProps) {
-      value = oldProps[i];
-      if (i == "children") {
-      } else if (i == "dangerouslySetInnerHTML") {
-        oldHtml = value;
-      } else if (i !== "key" && !(i in newProps)) {
-        setProperty(dom, i, null, oldProps[i], isSvg);
-      }
-    }
+    if (oldHtml) dom.innerHTML = '';
 
-    for (i in newProps) {
-      value = newProps[i];
-      if (i == "children") {
-        newChildren = normalizeChildren(value);
-      } else if (i == "dangerouslySetInnerHTML") {
-        newHtml = value;
-      } else if (i == "value") {
-        inputValue = value;
-      } else if (i == "checked") {
-        checked = value;
-      } else if (
-        i !== "key" &&
-        oldProps[i] !== value
-      ) {
-        setProperty(dom, i, value, oldProps[i], isSvg);
-      }
-    }
-
-    if (newHtml) {
-      if (!oldHtml ||
-        (newHtml.__html !== oldHtml.__html &&
-          newHtml.__html !== dom.innerHTML)) {
-        dom.innerHTML = newHtml.__html
-      }
-
-      newVNode._children = [];
-    } else {
-      if (oldHtml) dom.innerHTML = '';
-
-      if (oldVNode._children || newChildren) {
-        newVNode._children = toArray(newChildren);
-        diffChildren(
-          dom,
-          newVNode,
-          oldVNode,
-          isSvg,
-          commitQueue,
-          null,
-          refQueue,
-        );
-      }
+    if (oldVNode._children || newChildren) {
+      newVNode._children = toArray(newChildren);
+      diffChildren(
+        oldVNode,
+        newVNode,
+        dom,
+        isSvg,
+        commitQueue,
+        null,
+        refQueue,
+      );
     }
   }
-
-  return dom;
+  if (newVNode._flags & INSERT_VNODE) {
+    insert(parentDom, dom, anchor);
+  }
 }
 
-function copyVNode(newVNode, oldVNode) {
-  assign(newVNode, oldVNode);
+function processTextNode(parentDom, oldVNode, newVNode, anchor) {
+  let dom = oldVNode._dom || null
+  if (newVNode._flags & INSERT_VNODE) {
+    insert(
+      parentDom,
+      (newVNode._dom = document.createTextNode(newVNode.props)),
+      anchor
+    );
+  } else if (oldVNode.props !== newVNode.props && dom.data !== newVNode.props) {
+    setTextContent(dom, newVNode.props);
+  }
 }
 
 /** The `.render()` method for a PFC backing instance. */

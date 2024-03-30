@@ -1,5 +1,5 @@
 import { createVNode, createTextNode } from "../create-element";
-import { INSERT_VNODE, EMPTY_ARR, EMPTY_OBJ } from "../constants";
+import { INSERT_VNODE, MATCHED, EMPTY_ARR, EMPTY_OBJ } from "../constants";
 import { diff } from "./index";
 import { isArray, toArray, isFunction, lisAlgorithm } from "../shared";
 import { insert as insertApi, remove } from "../dom/api";
@@ -16,9 +16,9 @@ import { insert as insertApi, remove } from "../dom/api";
  * @param {any[]} refQueue an array of element needed invoke refs
  */
 export function diffChildren(
-  parentDom,
-  newParentVNode,
   oldParentVNode,
+  newParentVNode,
+  parentDom,
   isSvg,
   commitQueue,
   refQueue,
@@ -42,10 +42,12 @@ export function diffChildren(
   outer: {
     // Sync nodes with the same key at the beginning.
     while (isSameVNode(newVNode, oldVNode)) {
+      newVNode._flags |= MATCHED;
       diff(
-        parentDom,
-        newVNode,
         oldVNode,
+        newVNode,
+        parentDom,
+        null,
         isSvg,
         commitQueue,
         refQueue
@@ -63,7 +65,16 @@ export function diffChildren(
 
     // Sync nodes with the same key at the end.
     while (isSameVNode(newVNode, oldVNode)) {
-      diff(parentDom, newVNode, oldVNode, isSvg, commitQueue, refQueue);
+      newVNode._flags |= MATCHED;
+      diff(
+        oldVNode,
+        newVNode,
+        parentDom,
+        null,
+        isSvg,
+        commitQueue,
+        refQueue
+      );
 
       oldEndIdx--;
       newEndIdx--;
@@ -83,15 +94,16 @@ export function diffChildren(
     // Create new _dom
     while (j <= newEndIdx) {
       let childVNode = newChildren[j];
+      childVNode._flags |= INSERT_VNODE;
       diff(
-        parentDom,
-        childVNode,
         EMPTY_OBJ,
+        childVNode,
+        parentDom,
+        refNode,
         isSvg,
         commitQueue,
         refQueue
       );
-      insert(parentDom, childVNode, refNode);
       j++;
     }
   } else if (j > newEndIdx && j <= oldEndIdx) {
@@ -126,7 +138,16 @@ export function diffChildren(
 
       let newNode = newChildren[newIdx];
       // patch
-      diff(parentDom, newNode, oldNode, isSvg, commitQueue, refQueue);
+      newNode._flags |= MATCHED;
+      diff(
+        oldNode,
+        newNode,
+        parentDom,
+        null,
+        isSvg,
+        commitQueue,
+        refQueue
+      );
       source[newIdx - newStartIdx] = i + 1;
       patched++;
 
@@ -150,8 +171,16 @@ export function diffChildren(
 
       if (source[i] === 0) {
         // mount new
-        diff(parentDom, newNode, EMPTY_OBJ, isSvg, commitQueue, refQueue);
-        insert(parentDom, newNode, refNode);
+        newVNode._flags |= INSERT_VNODE;
+        diff(
+          EMPTY_OBJ,
+          newNode,
+          parentDom,
+          refNode,
+          isSvg,
+          commitQueue,
+          refQueue
+        );
       } else if (moved) {
         if (j < 0 || i != seq[j]) {
           move(parentDom, newNode, refNode);
