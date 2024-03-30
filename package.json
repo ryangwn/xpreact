@@ -3,40 +3,62 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
+    "dev": "run-s dev:*",
     "dev:demo": "pnpm --filter=demo dev",
-    "build:core": "pnpm --filter=xpreact-core build"
+    "dev:core": "pnpm --filter=xpreact-core dev",
+    "dev:hooks": "pnpm --filter=xpreact-hooks dev",
+    "dev:jsx-runtime": "pnpm --filter=xpreact-jsx-runtime dev",
+    "build": "run-s build:*",
+    "build:core": "pnpm --filter=xpreact-core build",
+    "build:hooks": "pnpm --filter=xpreact-hooks build",
+    "build:jsx-runtime": "pnpm --filter=xpreact-jsx-runtime build"
   },
-  "type": "module",
-  "keywords": [],
+  "keywords": [
+    "xpreact",
+    "react",
+    "light-weight",
+    "ui"
+  ],
   "author": "ryan",
   "license": "ISC",
   "exports": {
     ".": {
-      "types": "./packages/core/src/index.d.ts",
-      "import": "./packages/core/src/index.js",
-      "require": "./packages/core/src/index.js"
+      "types": "./packages/core/dist/types/index.d.ts",
+      "import": "./packages/core/dist/es/index.js",
+      "require": "./packages/core/dist/index.js"
     },
     "./hooks": {
-      "types": "./packages/hooks/src/index.d.ts",
-      "import": "./packages/hooks/src/index.js"
+      "types": "./packages/hooks/dist/types/index.d.ts",
+      "import": "./packages/hooks/dist/es/index.js",
+      "require": "./packages/hooks/dist/index.js"
     },
-    "./runes": {
-      "types": "./packages/signals/src/index.d.ts",
-      "import": "./packages/signals/src/index.js"
+    "./signals": {
+      "types": "./packages/signals/dist/types/index.d.ts",
+      "import": "./packages/signals/dist/es/index.js",
+      "require": "./packages/signals/dist/index.js"
     },
     "./jsx-runtime": {
-      "types": "./packages/jsx-runtime/src/index.d.ts",
-      "import": "./packages/jsx-runtime/src/index.js"
+      "types": "./packages/jsx-runtime/dist/index.d.ts",
+      "import": "./packages/jsx-runtime/dist/es/index.js",
+      "require": "./packages/jsx-runtime/dist/index.js"
     },
     "./jsx-dev-runtime": {
-      "types": "./packages/jsx-runtime/src/index.d.ts",
-      "import": "./packages/jsx-runtime/src/index.js"
+      "types": "./packages/jsx-runtime/dist/index.d.ts",
+      "import": "./packages/jsx-runtime/dist/es/index.js",
+      "require": "./packages/jsx-runtime/dist/index.js"
     }
   },
   "devDependencies": {
+    "@babel/preset-env": "^7.24.3",
+    "@rollup/plugin-alias": "^5.1.0",
+    "@rollup/plugin-babel": "^6.0.4",
+    "@rollup/plugin-node-resolve": "^15.2.3",
     "esbuild": "^0.20.2",
+    "npm-run-all": "^4.1.5",
+    "rimraf": "^5.0.5",
     "rollup": "^4.13.0",
     "rollup-plugin-copy": "^3.5.0",
-    "rollup-plugin-esbuild": "^6.1.1"
+    "rollup-plugin-esbuild": "^6.1.1",
+    "rollup-plugin-node-externals": "^7.1.1"
   }
 }

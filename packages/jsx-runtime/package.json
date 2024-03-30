@@ -4,7 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-   
+    "clean": "rimraf dist",
+    "dev": "rollup -c -w",
+    "prebuild": "pnpm clean",
+    "build": "NODE_ENV=production rollup -c"
   },
   "peerDependencies": {
     "xpreact": "workspace:*"
