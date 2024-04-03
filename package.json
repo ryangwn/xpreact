@@ -53,6 +53,8 @@
   "devDependencies": {
     "@antfu/eslint-config": "^2.12.1",
     "@babel/preset-env": "^7.24.3",
+    "@commitlint/cli": "^19.2.1",
+    "@commitlint/config-conventional": "^19.1.0",
     "@rollup/plugin-alias": "^5.1.0",
     "@rollup/plugin-babel": "^6.0.4",
     "@rollup/plugin-node-resolve": "^15.2.3",
@@ -64,5 +66,13 @@
     "rollup-plugin-copy": "^3.5.0",
     "rollup-plugin-esbuild": "^6.1.1",
     "rollup-plugin-node-externals": "^7.1.1"
+  },
+  "commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
+    ]
+  },
+  "simple-git-hooks": {
+    "commit-msg": "pnpm commitlint --edit ${1}"
   }
 }
