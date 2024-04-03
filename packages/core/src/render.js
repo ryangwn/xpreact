@@ -1,16 +1,15 @@
-import { EMPTY_OBJ, INSERT_VNODE } from './constants.js'
+import { EMPTY_OBJ } from './constants.js'
 import { Fragment, createElement } from './create-element.js'
 import { diff } from './diff'
 
 export function render(vnode, parentDom) {
-  
   let oldVNode = parentDom._children
-  
+
   vnode = parentDom._children = createElement(Fragment, null, [vnode])
 
   // List of effects that need to called after diffed
-  let commitQueue = [],
-    refQueue = [];
+  let commitQueue = []
+  let refQueue = []
 
   diff(
     oldVNode || EMPTY_OBJ,
@@ -29,5 +28,5 @@ export function render(vnode, parentDom) {
 }
 
 export function hydrate(vnode, parentDom) {
-  render(vnode, parentDom, hydrate);
+  render(vnode, parentDom, hydrate)
 }

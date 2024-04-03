@@ -1,14 +1,14 @@
 /**
  * Idea of snabbdom
- * 
- * 
+ *
+ *
  */
 
 /**
  *
  * @param {string} sel
  * @param {object} data
- * @param {array} children
+ * @param {Array} children
  * @param {string} text
  * @param {dom} elm DOM
  * @returns object
@@ -18,14 +18,14 @@ function vnode(
   data,
   children,
   text,
-  elm
+  elm,
 ) {
   return {
     sel,
     data,
     children,
     text,
-    elm
+    elm,
   }
 }
 
@@ -36,23 +36,24 @@ function vnode(
  * @param {any} c
  */
 function h(a, b, c) {
-  if (arguments.length < 3) throw Error('');
+  if (arguments.length < 3)
+    throw new Error('')
   // 1. text node
   if (typeof c === 'string' || typeof c === 'number') {
-    return vnode(a, b, undefined, c, undefined);
+    return vnode(a, b, undefined, c, undefined)
   } // 2. [h(),h()] [h(),text]
   else if (Array.isArray(c)) {
-    let children = [];
+    let children = []
     for (let i = 0; i < c.length; i++) {
       if (!(typeof c[i] === 'object' && c[i].sel))
         throw new Error('')
-      children.push(c[i]);
+      children.push(c[i])
     }
-    return vnode(a, b, children, undefined, undefined);
+    return vnode(a, b, children, undefined, undefined)
   } // 3. {sel,data,children,text,elm}
   else if (typeof c === 'object' && c.sel) {
-    let children = [c];
-    return vnode(a, b, children, undefined, undefined);
+    let children = [c]
+    return vnode(a, b, children, undefined, undefined)
   }
 }
 
@@ -60,12 +61,12 @@ function h(a, b, c) {
  * Diff algorithm
  * const oldVnode = [a, b, c, d];
  * const newVnode = [b, d, a];
- * 
+ *
  * :will rearrange of node and remove old new node.
- * 
+ *
  * @param {dom} parentElm
- * @param {*} oldChild 
- * @param {*} newChild 
+ * @param {*} oldChild
+ * @param {*} newChild
  */
 function updateChildren(parentElm, oldChild, newChild) {
   let oldStartIdx = 0
@@ -79,12 +80,12 @@ function updateChildren(parentElm, oldChild, newChild) {
   let keyMap = null
 
   while (newStartIdx <= newEndIdx && oldStartIdx <= oldEndIdx) {
-
     if (oldChild[oldStartIdx] === undefined) {
       oldStartVnode = oldChild[++oldStartIdx]
-    } else if (oldChild[oldEndIdx] === undefined) {
+    }
+    else if (oldChild[oldEndIdx] === undefined) {
       oldEndVnode = oldChild[--oldEndIdx]
-    } // 1. 
+    } // 1.
     else if (sameVnode(oldStartVnode, newStartVnode)) {
       console.log('1.')
 
@@ -117,7 +118,8 @@ function updateChildren(parentElm, oldChild, newChild) {
 
       newStartVnode = newChild[++newStartIdx]
       oldEndVnode = oldChild[--oldEndIdx]
-    } else {
+    }
+    else {
       console.log('5.')
 
       if (!keyMap) {
@@ -125,7 +127,8 @@ function updateChildren(parentElm, oldChild, newChild) {
         for (let i = oldStartIdx; i < oldEndIdx; i++) {
           if (oldChild[i]) {
             const key = oldChild[i].data.key
-            if (key) keyMap[key] = i
+            if (key)
+              keyMap[key] = i
           }
         }
       }
@@ -142,7 +145,8 @@ function updateChildren(parentElm, oldChild, newChild) {
         oldChild[idInOld] = undefined
 
         parentElm.insertBefore(moveElm.elm, oldStartVnode.elm)
-      } else {
+      }
+      else {
         console.log('6.')
         // Create elm if not match with old key
         parentElm.insertBefore(createElm(newStartVnode), oldStartVnode.elm)
@@ -162,21 +166,22 @@ function updateChildren(parentElm, oldChild, newChild) {
   if (oldStartIdx <= oldEndIdx) {
     for (let i = oldStartIdx; i <= oldEndIdx; i++) {
       // Remove old element when newChild.length < oldChild.length
-      if (oldChild[i]?.elm) parentElm.removeChild(oldChild[i].elm)
+      if (oldChild[i]?.elm)
+        parentElm.removeChild(oldChild[i].elm)
     }
   }
 }
 
 /**
- * 
+ *
  * @param {vnode} vnode1
  * @param {vnode} vnode2
  * @returns {boolean}
  */
 function sameVnode(vnode1, vnode2) {
   return (
-    (vnode1.data ? vnode1.data.key : undefined) ===
-    (vnode2.data ? vnode2.data.key : undefined) && vnode1.sel === vnode2.sel
+    (vnode1.data ? vnode1.data.key : undefined)
+    === (vnode2.data ? vnode2.data.key : undefined) && vnode1.sel === vnode2.sel
   )
 }
 
@@ -186,14 +191,14 @@ function sameVnode(vnode1, vnode2) {
  */
 function patch(oldVnode, newVnode) {
   // 1. Does oldVnode is vnode?
-  if (!oldVnode.sel) {
+  if (!oldVnode.sel)
     oldVnode = emptyNodeAt(oldVnode)
-  }
 
   if (sameVnode(oldVnode, newVnode)) {
     patchVnode(oldVnode, newVnode)
-  } else {
-    let newNode = createElm(newVnode);
+  }
+  else {
+    let newNode = createElm(newVnode)
 
     if (oldVnode.elm.parentNode) {
       let parentNode = oldVnode.elm.parentNode
@@ -208,30 +213,32 @@ function patch(oldVnode, newVnode) {
 }
 
 /**
- * 
- * @param {vnode} oldVnode 
+ *
+ * @param {vnode} oldVnode
  * @param {vnode} newVnode
  * @returns
  */
 function patchVnode(oldVnode, newVnode) {
   // 1.
-  if (oldVnode === newVnode) return
+  if (oldVnode === newVnode)
+    return
   // 2.
   if (newVnode.text && !newVnode.children) {
-    // 
-    if (oldVnode.text != newVnode.text) {
-      oldVnode.elm.textContent = newVnode.text;
-    }
-  } else {
+    //
+    if (oldVnode.text != newVnode.text)
+      oldVnode.elm.textContent = newVnode.text
+  }
+  else {
     // 3.
     if (oldVnode.children) {
       updateChildren(oldVnode.elm, oldVnode.children, newVnode.children)
-    } else {
-      oldVnode.elm.innerHTML = ''
-      let newChildren = newVnode.children;
-      newChildren.map(child => {
-        const childNode = createElm(child);
-        oldVnode.elm.appendChild(childNode);
+    }
+    else {
+      oldVnode.elm.textContent = ''
+      let newChildren = newVnode.children
+      newChildren.map((child) => {
+        const childNode = createElm(child)
+        oldVnode.elm.appendChild(childNode)
       })
     }
   }
@@ -247,28 +254,29 @@ function emptyNodeAt(elm) {
 }
 
 /**
- * 
- * @param {vnode} vnode 
+ *
+ * @param {vnode} vnode
  */
 function createElm(vnode) {
-  let node = document.createElement(vnode.sel);
+  let node = document.createElement(vnode.sel)
 
   // Text content
   if (vnode.text !== '' && (
     vnode.children === undefined || vnode.children.length === 0
   )) {
-    node.textContent = vnode.text;
-  } else if (Array.isArray(vnode.children) && vnode.children.length > 0) {
-    let children = vnode.children;
+    node.textContent = vnode.text
+  }
+  else if (Array.isArray(vnode.children) && vnode.children.length > 0) {
+    let children = vnode.children
 
-    children.map(child => {
-      let childNode = createElm(child);
-      node.appendChild(childNode);
+    children.map((child) => {
+      let childNode = createElm(child)
+      node.appendChild(childNode)
     })
   }
 
-  vnode.elm = node;
-  return node;
+  vnode.elm = node
+  return node
 }
 
 let app = document.querySelector('#app')
@@ -327,7 +335,7 @@ let vnode6 = h('ul', {}, [
       h('li', { key: 'C' }, 'C'),
       h('li', { key: 'D' }, 'D'),
       h('li', { key: 'E' }, h('div', { key: 'R' }, 'R')),
-    ])
+    ]),
   ),
 ])
 let vnodeList = [vnode2, vnode3, vnode4, vnode5, vnode6]

@@ -1,10 +1,11 @@
-const path = require('path')
-const process = require('process')
+const path = require('node:path')
+const process = require('node:process')
 const babelPlugin = require('@rollup/plugin-babel')
 const { default: esbuild, minify } = require('rollup-plugin-esbuild')
-const copy = require('rollup-plugin-copy')
-const alias = require('@rollup/plugin-alias')
+// const copy = require('rollup-plugin-copy')
+// const alias = require('@rollup/plugin-alias')
 const resolve = require('@rollup/plugin-node-resolve')
+
 const createBabelConfig = require(path.join(process.cwd(), 'babel.config.js'))
 
 const prod = process.env.NODE_ENV === 'production'
@@ -18,7 +19,7 @@ function external(id) {
 
 function getBabelOptions(targets) {
   return {
-    ...createBabelConfig({ env: (env) => env === 'build' }, targets),
+    ...createBabelConfig({ env: env => env === 'build' }, targets),
     extensions,
     comments: false,
     babelHelpers: 'bundled',
@@ -41,7 +42,7 @@ function createESMConfig(input, output) {
     plugins: [
       resolve({ extensions }),
       getEsbuild(),
-    ]
+    ],
   }
 }
 
@@ -54,19 +55,19 @@ function createCommonJSConfig(input, output) {
       resolve({ extensions }),
       babelPlugin(getBabelOptions({ ie: 11 })),
       minify(),
-    ]
+    ],
   }
 }
 
-function createUMDConfig() {
+// function createUMDConfig() {
 
-}
+// }
 
-module.exports = function (args) {
+module.exports = function () {
   return function (input, output) {
     return [
       createESMConfig(input, `${output}/es/index.js`),
-      createCommonJSConfig(input, `${output}/index.js`)
+      createCommonJSConfig(input, `${output}/index.js`),
     ]
   }
 }

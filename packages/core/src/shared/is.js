@@ -3,5 +3,5 @@ export function isFunction(o) {
 }
 
 export function isNull(o) {
-  return o === null;
+  return o === null
 }

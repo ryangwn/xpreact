@@ -35,7 +35,7 @@ function Mapp() {
           <li key={item}>{item}</li>
         ))}
       </ul>
-      <button onClick={() => setSuffer(['E', 'A', 'B', 'F', 'C', 'D'])}>Shffer</button>
+      <button onClick={() => setSuffer(shuffle(['E', 'A', 'B', 'F', 'C', 'D']))}>Shffer</button>
     </>
   );
 }
@@ -51,7 +51,7 @@ function Test({ a }) {
       <button
         onClick={() => {
           let c = countx + 1;
-          counta = 2;
+          // counta = 2;
           setCountx(c);
         }}
       >
@@ -80,6 +80,9 @@ export default function App() {
       </button>
       <Test a={count} />
       <Mapp a={a} />
+      <svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="50" cy="50" r="40" stroke="green" stroke-width="4" fill="yellow" />
+      </svg>
     </div>
   );
 }

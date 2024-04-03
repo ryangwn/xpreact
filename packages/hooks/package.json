@@ -2,6 +2,9 @@
   "name": "xpreact-hooks",
   "version": "1.0.0",
   "description": "",
+  "author": "ryan",
+  "license": "ISC",
+  "keywords": [],
   "main": "index.js",
   "scripts": {
     "clean": "rimraf dist",
@@ -9,9 +12,6 @@
     "prebuild": "pnpm clean",
     "build": "NODE_ENV=production rollup -c"
   },
-  "keywords": [],
-  "author": "ryan",
-  "license": "ISC",
   "dependencies": {
     "xpreact": "workspace:*"
   }

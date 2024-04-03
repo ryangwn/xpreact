@@ -2,5 +2,5 @@
  * @type
  */
 export const options = {
-  
+
 }

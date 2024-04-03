@@ -1,5 +1,5 @@
 packages:
-  - "packages/*"
-  - "demo"
-  - "benchmark/*"
-  - "!**/test/**"
+  - 'packages/*'
+  - demo
+  - 'benchmark/*'
+  - '!**/test/**'

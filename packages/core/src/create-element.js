@@ -10,28 +10,29 @@ export const VNodeFlags = {
 }
 
 export function createElement(type, props, children) {
-  let normalizedProps = {},
-    key,
-    ref,
-    i;
+  let normalizedProps = {}
+  let key
+  let ref
+  let i
 
   for (i in props) {
-    if (i === 'key') key = props[i];
-    else if (i === 'ref') ref = props[i];
-    else normalizedProps[i] = props[i];
+    if (i === 'key')
+      key = props[i]
+    else if (i === 'ref')
+      ref = props[i]
+    else normalizedProps[i] = props[i]
   }
 
   if (arguments.length > 2) {
-    normalizedProps.children = 
-      arguments.length > 3 ? slice.call(arguments, 2) : children
+    normalizedProps.children
+      = arguments.length > 3 ? slice.call(arguments, 2) : children
   }
 
   // If a component VNode, check for and apply defaultProps
   if (isFunction(type) && type.defaultProps != null) {
     for (i in type.defaultProps) {
-      if (normalizedProps[i] === undefined) {
+      if (normalizedProps[i] === undefined)
         normalizedProps[i] = type.defaultProps[i]
-      }
     }
   }
 
@@ -53,26 +54,26 @@ export function createVNode(type, props, key, ref, flags) {
 
     _component: null,
 
-    constructor: undefined
+    constructor: undefined,
   }
 
-  return vnode;
+  return vnode
 }
 
 export function createTextNode(text, key) {
   return {
     type: null,
     props: text,
-    key: key,
+    key,
     ref: null,
     flags: VNodeFlags.Text,
   }
 }
 
 export function createRef() {
-  return { current: null };
+  return { current: null }
 }
 
 export function Fragment(props) {
-	return props.children;
+  return props.children
 }

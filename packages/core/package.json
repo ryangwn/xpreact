@@ -2,14 +2,14 @@
   "name": "xpreact-core",
   "version": "1.0.0",
   "description": "",
+  "author": "ryan",
+  "license": "ISC",
+  "keywords": [],
   "main": "index.js",
   "scripts": {
     "clean": "rimraf dist",
     "dev": "rollup -c -w",
     "prebuild": "pnpm clean",
     "build": "NODE_ENV=production rollup -c --config-core"
-  },
-  "keywords": [],
-  "author": "ryan",
-  "license": "ISC"
+  }
 }

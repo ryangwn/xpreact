@@ -3,18 +3,23 @@ import { diff } from './diff'
 import { RE_RENDER_VNODE } from './constants'
 
 export function BaseComponent(props, context) {
-  this.props = props;
-  this.context = context;
+  this.props = props
+  this.context = context
 }
 
 BaseComponent.prototype.setState = function () {
-  if (this._vnode) {
+  if (this._vnode)
     enqueueRender(this)
-  }
 }
 
-BaseComponent.prototype.forceUpdate = function () {
+BaseComponent.prototype.forceUpdate = function (callback) {
   if (this._vnode) {
+    // Set render mode so that we can differentiate where the render request
+    // is coming from. We need this because forceUpdate should never call
+    // shouldComponentUpdate
+    this._force = true
+    if (callback)
+      this._renderCallbacks.push(callback)
     enqueueRender(this)
   }
 }
@@ -28,13 +33,13 @@ BaseComponent.prototype.render = function () {
  * @param {Component} component The component to rerender
  */
 function renderComponent(component, commitQueue, refQueue) {
-  let oldVNode = component._vnode,
-    parentDom = component._parentDom;
+  let oldVNode = component._vnode
+  let parentDom = component._parentDom
 
   if (parentDom) {
-		const newVNode = assign({}, oldVNode);
+    const newVNode = assign({}, oldVNode)
 
-    newVNode._flags = RE_RENDER_VNODE;
+    newVNode._flags = RE_RENDER_VNODE
 
     diff(
       oldVNode,
@@ -43,12 +48,12 @@ function renderComponent(component, commitQueue, refQueue) {
       null,
       parentDom.ownerSVGElement !== undefined,
       commitQueue,
-      refQueue
+      refQueue,
     )
     // Pointer to parent
-    oldVNode._children = newVNode._children;
+    oldVNode._children = newVNode._children
 
-    newVNode._flags = null;
+    newVNode._flags = null
   }
 }
 
@@ -56,12 +61,12 @@ function renderComponent(component, commitQueue, refQueue) {
  * The render queue
  * @type {Array<Component>}
  */
-let rerenderQueue = [];
+let rerenderQueue = []
 
-const defer =
-  typeof Promise == 'function'
+const defer
+  = typeof Promise == 'function'
     ? Promise.prototype.then.bind(Promise.resolve())
-    : setTimeout;
+    : setTimeout
 
 /**
  * Enqueue a rerender of a component
@@ -69,28 +74,26 @@ const defer =
  */
 export function enqueueRender(c) {
   if (
-    (!c._dirty &&
-      (c._dirty = true) &&
-      rerenderQueue.push(c) &&
-      !process._rerenderCount++)
-  ) {
-    defer(process);
-  }
+    (!c._dirty
+    && (c._dirty = true)
+    && rerenderQueue.push(c)
+    && !process._rerenderCount++)
+  )
+    defer(process)
 }
 
 function process() {
-  let c,
-    commitQueue = [],
-    refQueue = [];
+  let c
+  let commitQueue = []
+  let refQueue = []
 
   // Don't update `renderCount` yet. Keep its value non-zero to prevent unnecessary
   // process() calls from getting scheduled while `queue` is still being consumed.
   while ((c = rerenderQueue.shift())) {
-		if (c._dirty) {
+    if (c._dirty)
       renderComponent(c, commitQueue, refQueue)
-    }
   }
-  process._rerenderCount = 0;
+  process._rerenderCount = 0
 }
 
-process._rerenderCount = 0;
+process._rerenderCount = 0

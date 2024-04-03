@@ -2,7 +2,7 @@ export {
   createElement,
   createElement as h,
   createVNode,
-  Fragment
+  Fragment,
 } from './create-element'
 
 export { render } from './render'
