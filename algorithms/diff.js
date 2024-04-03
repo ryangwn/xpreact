@@ -269,7 +269,7 @@ function createElm(vnode) {
   else if (Array.isArray(vnode.children) && vnode.children.length > 0) {
     let children = vnode.children
 
-    children.map((child) => {
+    children.forEach((child) => {
       let childNode = createElm(child)
       node.appendChild(childNode)
     })
