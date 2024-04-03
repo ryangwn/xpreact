@@ -47,6 +47,7 @@
     "build:core": "pnpm --filter=xpreact-core build",
     "build:hooks": "pnpm --filter=xpreact-hooks build",
     "build:jsx-runtime": "pnpm --filter=xpreact-jsx-runtime build",
+    "prepare": "npx simple-git-hooks",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
   },
